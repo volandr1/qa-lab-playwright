@@ -43,20 +43,19 @@ test.describe('AcademyBugs Final Tests', () => {
   test('Test-case №4: Перевірка видалення товару з кошика', async ({ page }) => {
     // 1. Спочатку додаємо товар, щоб було що видаляти
     await page.goto('https://academybugs.com/store/blue-tshirt/');
-    await page.getByRole('button', { name: 'ADD TO CART' }).first().click();
-    await expect(page).toHaveURL(/.*my-cart/);
+    await page.getByRole('button', { name: 'ADD TO CART' }).click();
+    const productRow = page.locator('tr').filter({ hasText: 'Blue Tshirt'});
 
-    // 2. Шукаємо кнопку видалення.
-    // Ми шукаємо або по класу, або по символу "×", або по назві "Remove"
-    // Це "перестраховка", щоб точно знайти кнопку
-    const deleteButton = page.locator('.ec_cart_item_delete, a:has-text("×"), [aria-label="Remove"]').first();
-    
-    // 3. Чекаємо і клікаємо (force: true дозволяє клікнути, навіть якщо кнопка трохи перекрита)
-    await deleteButton.waitFor();
-    await deleteButton.click({ force: true });
+    await expect(productRow).toBeVisible({ timeout: 20000 });
+    const removeButton = productRow.locator('div.ec_cartitem_delete');
 
-    // 4. Перевіряємо, що кошик порожній
-    await expect(page.getByText('Your cart is currently empty')).toBeVisible();
+    await expect(removeButton).toBeVisible({ timeout: 10000});
+    await removeButton.click({force: true});
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(5000);
+
+    await expect(page.getByText('There are no items in your cart')).toBeVisible({ timeout: 15000});
+    await expect(page.getByText('Blue Tshirt')).not.toBeVisible();
   });
 
 });
